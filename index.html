@@ -258,32 +258,34 @@ function sendMail(ev){
   const subject = `Website contact from ${name}`;
   const body    = `From: ${name} <${email}>\n\n${msg}`;
 
-  // เตรียมลิงก์
-  const mailto = `mailto:tannapatph@gmail.com?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
-  const gmailURL = 'https://mail.google.com/mail/?' + new URLSearchParams({
-    view: 'cm',
-    to: 'tannapatph@gmail.com',
-    su: subject,
-    body: body
-    // authuser: '0'  // ถ้าล็อกอินหลายบัญชีและอยากบังคับบัญชีแรก ให้ปลดคอมเมนต์
+  const to = 'tannapatph@gmail.com'; // ← เปลี่ยนได้ตามอีเมลปลายทางของคุณ
+
+  // ลิงก์ที่ต้องใช้
+  const mailto = `mailto:${to}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+  const gmailWeb = 'https://mail.google.com/mail/?' + new URLSearchParams({
+    view: 'cm', to, su: subject, body
+    // authuser: '0' // ถ้าล็อกอินหลายบัญชีและอยากบังคับบัญชีแรก ให้ปลดคอมเมนต์
   }).toString();
 
-  // 1) เปิดแท็บเปล่าทันทีในจังหวะคลิก (จะไม่โดนบล็อก)
-  const tab = window.open('', '_blank', 'noopener');
+  // ตรวจว่าเป็นมือถือ/แท็บเล็ต (iOS/Android)
+  const ua = navigator.userAgent.toLowerCase();
+  const isMobile = /iphone|ipad|ipod|android/.test(ua);
 
-  // 2) ลองยิง mailto: ในแท็บปัจจุบัน (มือถือจะเด้งแอปอีเมล/ตัวเลือกแอป)
+  // 1) ยิง mailto: ก่อน (จะพยายามเปิดแอปอีเมล/ตัวเลือกแอป)
   window.location.href = mailto;
 
-  // 3) ถ้า mailto ไม่พาออกจากหน้า ให้ใช้แท็บที่เปิดไว้ไป Gmail Compose แทน
+  // 2) ตั้ง fallback:
+  // - บนมือถือ/ไอแพด: ใช้ "แท็บเดิม" ไป Gmail Web (กันอาการแท็บขาว-ย้อนกลับไม่ได้)
+  // - บนเดสก์ท็อป: เปิด Gmail Web ในแท็บใหม่
   setTimeout(() => {
-    if (tab && !tab.closed) {
-      try { tab.location = gmailURL; } catch(e) { /* เผื่อโดนบล็อก/ข้อจำกัดข้ามโดเมน */ }
+    if (isMobile) {
+      // เปิดในแท็บเดิม
+      window.location.href = gmailWeb;
     } else {
-      // สำรองสุดท้าย
-      window.open(gmailURL, '_blank', 'noopener');
+      // เดสก์ท็อปเปิดแท็บใหม่ (ผู้ใช้ยังมีฟอร์มเดิมอยู่)
+      window.open(gmailWeb, '_blank', 'noopener');
     }
-  }, 800);
-
+  }, 900); // หน่วง ~0.9s เผื่อเวลาสลับไปแอปอีเมล
   return false;
 }
 
