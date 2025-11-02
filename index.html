@@ -219,7 +219,7 @@
           <label for="message">Message</label>
           <textarea class="textarea" id="message" name="message" required></textarea>
         </div>
-        <button class="btn primary" type="submit">Send</button>
+        <button class="btn primary" type="button" onclick="sendMail(event)">Send</button>
       </form>
     </section>
   </main>
@@ -248,16 +248,38 @@
       })
     });
 
-    // Mailto fallback for the form (no backend required)
-    function sendMail(ev){
-      ev.preventDefault();
-      const name = document.getElementById('name').value.trim();
-      const email = document.getElementById('email').value.trim();
-      const msg = document.getElementById('message').value.trim();
-      const body = encodeURIComponent(`Hi, I am ${name}\n\n${msg}\n\nFrom: ${email}`);
-      window.location.href = `mailto:you@example.com?subject=Website%20contact%20from%20${encodeURIComponent(name)}&body=${body}`;
-      return false;
-    }
+function sendMail(ev){
+  ev.preventDefault();
+
+  const name  = document.getElementById('name').value.trim();
+  const email = document.getElementById('email').value.trim();
+  const msg   = document.getElementById('message').value.trim();
+
+  const subject = `Website contact from ${name}`;
+  const body    = `From: ${name} <${email}>\n\n${msg}`;
+
+  // 1) mailto: — ให้มือถือเปิดแอปอีเมลก่อน (หรือ Chrome ที่ตั้ง Gmail handler ไว้)
+  const mailto = `mailto:tannapatph@gmail.com?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+
+  // 2) Fallback — ถ้า mailto ไม่ทำงานใน ~800ms ให้เปิด Gmail web compose แทน
+  const gmailURL = `https://mail.google.com/mail/?` + new URLSearchParams({
+    view: 'cm',
+    to: 'tannapatph@gmail.com',
+    su: subject,
+    body: body
+    // authuser: '0' // ถ้าล็อกอินหลายบัญชี แล้วอยากบังคับบัญชีแรก ให้ปลดคอมเมนต์
+  }).toString();
+
+  // เปิด mailto โดยตรง (มือถือจะเด้งไปแอป/ตัวเลือกแอปเอง)
+  window.location.href = mailto;
+
+  // ตั้ง fallback เปิด Gmail web ถ้า mailto ไม่พาออกจากหน้านี้
+  setTimeout(() => {
+    window.open(gmailURL, '_blank', 'noopener');
+  }, 800);
+
+  return false;
+}
 
     // Year stamp
     document.getElementById('year').textContent = new Date().getFullYear();
