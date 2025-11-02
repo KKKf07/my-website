@@ -258,24 +258,30 @@ function sendMail(ev){
   const subject = `Website contact from ${name}`;
   const body    = `From: ${name} <${email}>\n\n${msg}`;
 
-  // 1) mailto: — ให้มือถือเปิดแอปอีเมลก่อน (หรือ Chrome ที่ตั้ง Gmail handler ไว้)
+  // เตรียมลิงก์
   const mailto = `mailto:tannapatph@gmail.com?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
-
-  // 2) Fallback — ถ้า mailto ไม่ทำงานใน ~800ms ให้เปิด Gmail web compose แทน
-  const gmailURL = `https://mail.google.com/mail/?` + new URLSearchParams({
+  const gmailURL = 'https://mail.google.com/mail/?' + new URLSearchParams({
     view: 'cm',
     to: 'tannapatph@gmail.com',
     su: subject,
     body: body
-    // authuser: '0' // ถ้าล็อกอินหลายบัญชี แล้วอยากบังคับบัญชีแรก ให้ปลดคอมเมนต์
+    // authuser: '0'  // ถ้าล็อกอินหลายบัญชีและอยากบังคับบัญชีแรก ให้ปลดคอมเมนต์
   }).toString();
 
-  // เปิด mailto โดยตรง (มือถือจะเด้งไปแอป/ตัวเลือกแอปเอง)
+  // 1) เปิดแท็บเปล่าทันทีในจังหวะคลิก (จะไม่โดนบล็อก)
+  const tab = window.open('', '_blank', 'noopener');
+
+  // 2) ลองยิง mailto: ในแท็บปัจจุบัน (มือถือจะเด้งแอปอีเมล/ตัวเลือกแอป)
   window.location.href = mailto;
 
-  // ตั้ง fallback เปิด Gmail web ถ้า mailto ไม่พาออกจากหน้านี้
+  // 3) ถ้า mailto ไม่พาออกจากหน้า ให้ใช้แท็บที่เปิดไว้ไป Gmail Compose แทน
   setTimeout(() => {
-    window.open(gmailURL, '_blank', 'noopener');
+    if (tab && !tab.closed) {
+      try { tab.location = gmailURL; } catch(e) { /* เผื่อโดนบล็อก/ข้อจำกัดข้ามโดเมน */ }
+    } else {
+      // สำรองสุดท้าย
+      window.open(gmailURL, '_blank', 'noopener');
+    }
   }, 800);
 
   return false;
